@@ -28,13 +28,20 @@ export function extractVideoId(url: string): string {
 
 /**
  * Fetch the transcript for a YouTube video.
- * Returns an array of transcript segments with text, offset, and duration.
+ * Includes better error reporting for Cloud Provider IP blocking.
  */
 export async function getTranscript(videoUrl: string): Promise<TranscriptSegment[]> {
   const videoId = extractVideoId(videoUrl);
 
   try {
-    const transcript = await fetchTranscript(videoId);
+    console.log(`🔍 Fetching transcript for video: ${videoId}...`);
+    const transcript = await fetchTranscript(videoId, {
+      lang: 'en',
+    });
+
+    if (!transcript || transcript.length === 0) {
+      throw new Error('No transcript data returned from YouTube.');
+    }
 
     return transcript.map((item: any) => ({
       text: item.text || '',
@@ -42,9 +49,20 @@ export async function getTranscript(videoUrl: string): Promise<TranscriptSegment
       duration: item.duration || 0,
     }));
   } catch (error: any) {
+    const errorMsg = error.message || 'Unknown error';
+    console.error(`❌ Transcript fetch failed for ${videoId}:`, errorMsg);
+
+    // Provide more helpful messages for Render/Cloud users
+    if (errorMsg.includes('Too Many Requests') || errorMsg.includes('captcha')) {
+      throw new Error(
+        `YouTube has blocked this server's IP (Render.com). This is a common restriction on cloud providers. ` +
+        `Try a different video or wait a few minutes.`
+      );
+    }
+
     throw new Error(
       `Failed to fetch transcript for video ${videoId}. ` +
-      `Ensure the video has captions enabled. Error: ${error.message}`
+      `Ensure the video has captions enabled. (Error: ${errorMsg})`
     );
   }
 }
