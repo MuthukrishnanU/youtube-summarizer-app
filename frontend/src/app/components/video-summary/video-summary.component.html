@@ -1,0 +1,78 @@
+<div class="summary-container animate-fade-in-up">
+  <!-- Video Metadata Header -->
+  <div class="glass-card metadata-card p-4 mb-4">
+    <div class="metadata-header">
+      <div class="video-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+          <line x1="7" y1="2" x2="7" y2="22"></line>
+          <line x1="17" y1="2" x2="17" y2="22"></line>
+          <line x1="2" y1="12" x2="22" y2="12"></line>
+          <line x1="2" y1="7" x2="7" y2="7"></line>
+          <line x1="2" y1="17" x2="7" y2="17"></line>
+          <line x1="17" y1="17" x2="22" y2="17"></line>
+          <line x1="17" y1="7" x2="22" y2="7"></line>
+        </svg>
+      </div>
+      <div class="metadata-text">
+        <h3 class="video-title">{{ videoData().title }}</h3>
+        <div class="metadata-badges">
+          <span class="timestamp-badge">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            {{ videoData().duration }}
+          </span>
+          <span class="topic-count-badge">
+            {{ videoData().summary.length }} Topics
+          </span>
+        </div>
+      </div>
+    </div>
+
+    @if (videoData().description && videoData().description !== 'NA') {
+      <div class="description-section mt-3">
+        <h6 class="section-label">Description</h6>
+        <p class="description-text">{{ truncatedDescription }}</p>
+      </div>
+    }
+  </div>
+
+  <!-- Summary Timeline -->
+  <div class="timeline-section">
+    <h4 class="section-heading mb-4">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="8" y1="6" x2="21" y2="6"></line>
+        <line x1="8" y1="12" x2="21" y2="12"></line>
+        <line x1="8" y1="18" x2="21" y2="18"></line>
+        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+      </svg>
+      Key Topics &amp; Moments
+    </h4>
+
+    <div class="timeline">
+      @for (topic of videoData().summary; track topic.topic; let i = $index) {
+        <div class="timeline-item" [style.animation-delay]="(i * 0.1) + 's'">
+          <div class="timeline-marker">
+            <span class="marker-number">{{ i + 1 }}</span>
+          </div>
+          <div class="glass-card timeline-card p-3">
+            <div class="topic-header">
+              <h5 class="topic-title">{{ topic.topic }}</h5>
+              <span class="timestamp-badge">
+                {{ topic.startTime }} — {{ topic.endTime }}
+              </span>
+            </div>
+            <p class="topic-summary">{{ topic.summary }}</p>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

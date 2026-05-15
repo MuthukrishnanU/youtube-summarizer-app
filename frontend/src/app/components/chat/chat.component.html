@@ -1,0 +1,117 @@
+<div class="chat-container glass-card" [class.chat-disabled]="!isEnabled">
+  <!-- Chat Header -->
+  <div class="chat-header">
+    <div class="chat-header-left">
+      <div class="chat-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+      </div>
+      <div>
+        <h5 class="chat-title">Ask about this video</h5>
+        @if (isEnabled) {
+          <p class="chat-subtitle">{{ videoTitle() }}</p>
+        }
+      </div>
+    </div>
+    @if (isEnabled) {
+      <span class="status-dot active"></span>
+    } @else {
+      <span class="status-dot"></span>
+    }
+  </div>
+
+  <!-- Chat Messages Area -->
+  <div class="chat-messages" #chatMessages>
+    @if (!isEnabled) {
+      <div class="chat-overlay">
+        <div class="overlay-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </div>
+        <p class="overlay-text">Summarize a video to unlock the chat</p>
+        <p class="overlay-hint">You can ask questions about the video content once it's been analyzed</p>
+      </div>
+    } @else if (messages().length === 0) {
+      <div class="chat-empty">
+        <div class="empty-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </div>
+        <p class="empty-text">Ask anything about the video!</p>
+        <div class="suggestion-chips">
+          <button class="chip" (click)="currentMessage.set('What are the main topics covered?')">Main topics?</button>
+          <button class="chip" (click)="currentMessage.set('Can you summarize the key takeaways?')">Key takeaways?</button>
+          <button class="chip" (click)="currentMessage.set('What conclusions are drawn?')">Conclusions?</button>
+        </div>
+      </div>
+    } @else {
+      @for (msg of messages(); track msg.timestamp) {
+        <div class="message" [class.message-user]="msg.role === 'user'" [class.message-ai]="msg.role === 'ai'">
+          @if (msg.role === 'ai') {
+            <div class="avatar avatar-ai">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1.27a7 7 0 0 1-12.46 0H6a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"></path>
+              </svg>
+            </div>
+          }
+          <div class="bubble">
+            <p class="bubble-text">{{ msg.text }}</p>
+          </div>
+        </div>
+      }
+    }
+
+    <!-- Typing Indicator -->
+    @if (isTyping()) {
+      <div class="message message-ai">
+        <div class="avatar avatar-ai">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1.27a7 7 0 0 1-12.46 0H6a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"></path>
+          </svg>
+        </div>
+        <div class="bubble typing-bubble">
+          <div class="typing-dots">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Chat Input -->
+  <div class="chat-input-area">
+    <input
+      id="chat-input"
+      type="text"
+      class="form-control form-control-dark chat-input"
+      placeholder="{{ isEnabled ? 'Ask a question about the video...' : 'Summarize a video first...' }}"
+      [ngModel]="currentMessage()"
+      (ngModelChange)="currentMessage.set($event)"
+      (keydown.enter)="sendMessage()"
+      [disabled]="!isEnabled || isTyping()"
+    />
+    <button
+      id="chat-send-btn"
+      class="btn-gradient send-btn"
+      [disabled]="!isEnabled || !currentMessage().trim() || isTyping()"
+      (click)="sendMessage()"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"></line>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+      </svg>
+    </button>
+  </div>
+</div>
