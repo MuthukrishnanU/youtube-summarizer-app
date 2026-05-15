@@ -17,6 +17,42 @@ function getAI(): GoogleGenAI {
 // ----- Constants -----
 const GENERATION_MODEL = 'gemini-2.5-flash';
 const EMBEDDING_MODEL = 'gemini-embedding-001';
+const MAX_RETRIES = 3;
+
+/**
+ * Utility: sleep for a given number of milliseconds.
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Retry wrapper for Gemini API calls that may hit rate limits (429).
+ * Extracts the retry delay from the error response and waits accordingly.
+ */
+async function withRetry<T>(fn: () => Promise<T>, label: string): Promise<T> {
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      const msg = error.message || '';
+      if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED')) {
+        // Extract retry delay from error message (e.g., "retryDelay":"40s")
+        const delayMatch = msg.match(/"retryDelay"\s*:\s*"(\d+)s"/);
+        const waitSec = delayMatch ? parseInt(delayMatch[1], 10) + 5 : 45;
+
+        if (attempt < MAX_RETRIES) {
+          console.log(`⏳ ${label}: Rate limited. Retrying in ${waitSec}s (attempt ${attempt}/${MAX_RETRIES})...`);
+          await sleep(waitSec * 1000);
+          continue;
+        }
+      }
+      throw error;
+    }
+  }
+  throw new Error(`${label}: Max retries exceeded`);
+}
+
 
 /**
  * Generate a topic-wise summary of the video transcript using Gemini.
@@ -59,12 +95,15 @@ ${transcriptText}
 ]`;
 
   try {
-    const response = await client.models.generateContent({
-      model: GENERATION_MODEL,
-      contents: prompt,
-    });
+    const response = await withRetry(async () => {
+      return client.models.generateContent({
+        model: GENERATION_MODEL,
+        contents: prompt,
+      });
+    }, 'Summary generation');
 
-    const text = response.text?.trim() || '[]';
+    const rawText = response.text ?? '';
+    const text = rawText.trim() || '[]';
 
     // Clean up the response - remove any markdown code fences if present
     const cleaned = text
@@ -142,7 +181,8 @@ ${context}
       contents: prompt,
     });
 
-    return response.text?.trim() || 'I was unable to generate a response. Please try again.';
+    const rawText = response.text ?? '';
+    return rawText.trim() || 'I was unable to generate a response. Please try again.';
   } catch (error: any) {
     console.error('❌ Chat response generation failed:', error.message);
     throw new Error(`Failed to generate chat response: ${error.message}`);

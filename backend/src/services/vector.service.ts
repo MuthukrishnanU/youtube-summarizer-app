@@ -80,25 +80,18 @@ export async function searchSimilarChunks(
   const queryEmbedding = await generateEmbedding(question);
 
   try {
-    const results = await collection
-      .aggregate([
-        {
-          $vectorSearch: {
-            index: VECTOR_INDEX_NAME,
-            path: 'embedding',
-            queryVector: queryEmbedding,
-            numCandidates: limit * 10,
-            limit: limit * 2, // Get more, then filter by videoId
+      const results = await collection
+        .aggregate([
+          {
+            $vectorSearch: {
+              index: VECTOR_INDEX_NAME,
+              path: 'embedding',
+              queryVector: queryEmbedding,
+              numCandidates: limit * 10,
+              limit: limit,
+              filter: { videoId: { $eq: videoId } },
+            },
           },
-        },
-        {
-          $match: {
-            videoId: videoId,
-          },
-        },
-        {
-          $limit: limit,
-        },
         {
           $project: {
             _id: 0,

@@ -26,7 +26,6 @@ export interface ChatResponse {
 })
 export class ApiService {
   private readonly baseUrl = 'http://localhost:3000/api';
-  //private readonly baseUrl = 'https://youtube-summarizer-app-e7fg.onrender.com/api';
 
   constructor(private http: HttpClient) { }
 
