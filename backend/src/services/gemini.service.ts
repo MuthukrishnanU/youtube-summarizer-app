@@ -91,6 +91,9 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     const result = await client.models.embedContent({
       model: EMBEDDING_MODEL,
       contents: text,
+      config: {
+        outputDimensionality: 768,
+      },
     });
 
     if (!result.embeddings?.[0]?.values) {
