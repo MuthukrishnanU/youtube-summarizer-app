@@ -7,6 +7,11 @@ let db: Db;
  * Connect to MongoDB Atlas using the connection string from environment variables.
  */
 export async function connectToDatabase(): Promise<void> {
+  // If already connected, reuse the connection (crucial for serverless)
+  if (db && client) {
+    return;
+  }
+
   const uri = process.env.MONGODB_URI;
   if (!uri) {
     throw new Error('MONGODB_URI environment variable is not set');

@@ -23,19 +23,28 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Start server
-async function startServer() {
-  try {
-    await connectToDatabase();
-    console.log('✅ Connected to MongoDB Atlas');
+// Export app for Vercel
+export default app;
 
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
-    });
-  } catch (error) {
-    console.error('❌ Failed to start server:', error);
-    process.exit(1);
-  }
+// Start server only if running directly (local development)
+if (require.main === module) {
+  const startServer = async () => {
+    try {
+      await connectToDatabase();
+      console.log('✅ Connected to MongoDB Atlas');
+
+      app.listen(PORT, () => {
+        console.log(`🚀 Server running on http://localhost:${PORT}`);
+      });
+    } catch (error) {
+      console.error('❌ Failed to start server:', error);
+      process.exit(1);
+    }
+  };
+
+  startServer();
+} else {
+  // In serverless (Vercel), we connect to the database on the first request
+  // or use a middleware to ensure connection.
+  connectToDatabase().catch(err => console.error('DB Connection Error:', err));
 }
-
-startServer();
