@@ -25,7 +25,8 @@ export interface ChatResponse {
   providedIn: 'root',
 })
 export class ApiService {
-  private readonly baseUrl = 'http://localhost:3000/api';
+  //private readonly baseUrl = 'http://localhost:3000/api';
+  private readonly baseUrl = 'https://youtube-summarizer-app-sandy.vercel.app/api';
 
   constructor(private http: HttpClient) { }
 
