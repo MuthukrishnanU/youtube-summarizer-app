@@ -14,6 +14,17 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// Ensure database connection before handling any API requests
+app.use('/api', async (req, res, next) => {
+  try {
+    await connectToDatabase();
+    next();
+  } catch (error) {
+    console.error('DB Connection Error in middleware:', error);
+    res.status(500).json({ error: 'Database connection failed' });
+  }
+});
+
 // Routes
 app.use('/api/summarize', summarizeRoutes);
 app.use('/api/chat', chatRoutes);
@@ -44,7 +55,6 @@ if (require.main === module) {
 
   startServer();
 } else {
-  // In serverless (Vercel), we connect to the database on the first request
-  // or use a middleware to ensure connection.
-  connectToDatabase().catch(err => console.error('DB Connection Error:', err));
+  // In serverless (Vercel), the database connection is handled by the middleware
+  // on every request to /api/*
 }
