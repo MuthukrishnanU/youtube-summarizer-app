@@ -1,3 +1,8 @@
+import dns from 'node:dns';
+
+// Force Node.js to use Google's public DNS to avoid SRV resolution issues on some networks/Node versions
+dns.setServers(['8.8.8.8']);
+
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
